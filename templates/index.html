@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Subtítulos - Eijun</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold text-center mb-8">⚡ Generador de Subtítulos ⚡</h1>
+        <form id="subtitle-form" class="max-w-xl mx-auto">
+            <div class="mb-4">
+                <label for="video" class="block mb-2">Seleccionar Video:</label>
+                <input type="file" id="video" name="file" accept=".mp4,.avi,.mov" class="w-full p-2 bg-gray-800 rounded">
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="source_lang" class="block mb-2">Idioma origen:</label>
+                    <select id="source_lang" name="source_lang" class="w-full p-2 bg-gray-800 rounded">
+                        <option value="en">Inglés</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Francés</option>
+                        <option value="de">Alemán</option>
+                        <option value="it">Italiano</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="target_lang" class="block mb-2">Idioma destino:</label>
+                    <select id="target_lang" name="target_lang" class="w-full p-2 bg-gray-800 rounded">
+                        <option value="es">Español</option>
+                        <option value="en">Inglés</option>
+                        <option value="fr">Francés</option>
+                        <option value="de">Alemán</option>
+                        <option value="it">Italiano</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label for="model" class="block mb-2">Modelo Whisper:</label>
+                <select id="model" name="model" class="w-full p-2 bg-gray-800 rounded">
+                    <option value="tiny">Tiny</option>
+                    <option value="base">Base</option>
+                    <option value="small">Small</option>
+                    <!-- <option value="medium">Medium</option>
+                    <option value="large">Large</option> -->
+                </select>
+            </div>
+            <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+                Generar Subtítulos
+            </button>
+        </form>
+        <div id="status" class="mt-4 text-center"></div>
+        <div id="progress-container" class="hidden mt-4">
+            <div class="w-full bg-gray-700 rounded-full h-2.5">
+                <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('subtitle-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var formData = new FormData(this);
+            var statusDiv = document.getElementById('status');
+            var progressContainer = document.getElementById('progress-container');
+            var progressBar = document.getElementById('progress-bar');
+            
+            statusDiv.textContent = 'Generando subtítulos...';
+            progressContainer.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            
+            fetch('/generate', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.error || 'Unknown error occurred') });
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                var url = window.URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = formData.get('file').name.replace(/\.[^/.]+$/, "") + '.srt';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                statusDiv.textContent = 'Subtítulos generados exitosamente.';
+                progressContainer.classList.add('hidden');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                statusDiv.textContent = 'Error al generar subtítulos: ' + error.message;
+                progressContainer.classList.add('hidden');
+            });
+        });
+    </script>
+</body>
+</html>

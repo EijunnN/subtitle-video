@@ -1,0 +1,4 @@
+Flask
+faster-whisper
+deep-translator
+sentencepiece
